@@ -1090,6 +1090,7 @@ size_t LZ4F_decompress(LZ4F_decompressionContext_t decompressionContext,
                 dctxPtr->tmpInSize = 0;
                 dctxPtr->tmpInTarget = minFHSize;   /* minimum to attempt decode */
                 dctxPtr->dStage = dstage_storeHeader;
+				/* falls through */
             }
 
         case dstage_storeHeader:
