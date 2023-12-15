@@ -1195,16 +1195,20 @@ static unsigned int spd_detect_dimms(const struct mem_controller *ctrl)
 		unsigned device;
 		device = ctrl->channel0[i];
 		if (device) {
+			printk(BIOS_SPEW, "Trying channel0 i=%d, addr=%04xh\n", i, ctrl->channel0[i]);
 			byte = spd_read_byte(ctrl->channel0[i], 2);  /* Type */
 			if (byte == 7) {
 				dimm_mask |= (1 << i);
+				printk(BIOS_SPEW, "  success\n");
 			}
 		}
 		device = ctrl->channel1[i];
 		if (device) {
+			printk(BIOS_SPEW, "Trying channel1 i=%d, addr=%04xh\n", i, ctrl->channel1[i]);
 			byte = spd_read_byte(ctrl->channel1[i], 2);
 			if (byte == 7) {
 				dimm_mask |= (1 << (i + DIMM_SOCKETS));
+				printk(BIOS_SPEW, "  success\n");
 			}
 		}
 	}
