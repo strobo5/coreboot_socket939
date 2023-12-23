@@ -1175,18 +1175,16 @@ static long spd_handle_unbuffered_dimms(const struct mem_controller *ctrl,
 	dcl = pci_read_config32(ctrl->f2, DRAM_CONFIG_LOW);
 	dcl &= ~DCL_UnBuffDimm;
 	if (unbuffered) {
-		if ((has_dualch) && (!is_cpu_pre_d0())) {
-			dcl |= DCL_UnBuffDimm;
+		dcl |= DCL_UnBuffDimm;
+	}
 #if CONFIG_CPU_AMD_SOCKET_939
-			if ((cpuid_eax(1) & 0x30) == 0x30) {
-				/* CS[7:4] is copy of CS[3:0], should be set for 939 socket */
-				dcl |= DCL_UpperCSMap;
-			}
-#endif
-		} else {
-			dcl |= DCL_UnBuffDimm;
+	if ((has_dualch) && (!is_cpu_pre_d0())) {
+		if ((cpuid_eax(1) & 0x30) == 0x30) {
+			/* CS[7:4] is copy of CS[3:0], should be set for 939 socket */
+			dcl |= DCL_UpperCSMap;
 		}
 	}
+#endif
 	pci_write_config32(ctrl->f2, DRAM_CONFIG_LOW, dcl);
 
 	if (is_registered(ctrl)) {
