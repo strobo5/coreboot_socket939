@@ -1252,6 +1252,7 @@ static long spd_enable_2channels(const struct mem_controller *ctrl, long dimm_ma
 	if (!(nbcap & NBCAP_128Bit)) {
 		goto single_channel;
 	}
+	printk(BIOS_SPEW, "dimm_mask = %08lx\n", dimm_mask);
 	for (i = 0; (i < 4) && (ctrl->channel0[i]); i++) {
 		unsigned device0, device1;
 		int value0, value1;
@@ -1262,6 +1263,7 @@ static long spd_enable_2channels(const struct mem_controller *ctrl, long dimm_ma
 		}
 		device0 = ctrl->channel0[i];
 		device1 = ctrl->channel1[i];
+		printk(BIOS_SPEW, "Comparing channel0/1[%d] slots\n", i);
 		for (j = 0; j < ARRAY_SIZE(addresses); j++) {
 			unsigned addr;
 			addr = addresses[j];
@@ -2193,23 +2195,29 @@ void sdram_set_spd_registers(const struct mem_controller *ctrl)
 		printk(BIOS_DEBUG, "No memory for this cpu\n");
 		return;
 	}
+	printk(BIOS_SPEW, "spd_detect dimm_mask = %08lx\n", dimm_mask);
 	dimm_mask = spd_enable_2channels(ctrl, dimm_mask);
 	if (dimm_mask < 0)
 		goto hw_spd_err;
+	printk(BIOS_SPEW, "spd_enable_2ch dimm_mask = %08lx\n", dimm_mask);
 	dimm_mask = spd_set_ram_size(ctrl , dimm_mask);
 	if (dimm_mask < 0)
 		goto hw_spd_err;
+	printk(BIOS_SPEW, "spd_set_ram_size dimm_mask = %08lx\n", dimm_mask);
 	dimm_mask = spd_handle_unbuffered_dimms(ctrl, dimm_mask);
 	if (dimm_mask < 0)
 		goto hw_spd_err;
+	printk(BIOS_SPEW, "spd_handle_unbuf dimm_mask = %08lx\n", dimm_mask);
 	result = spd_set_memclk(ctrl, dimm_mask);
 	param     = result.param;
 	dimm_mask = result.dimm_mask;
+	printk(BIOS_SPEW, "spd_set_memclk dimm_mask = %08lx\n", dimm_mask);
 	if (dimm_mask < 0)
 		goto hw_spd_err;
 	dimm_mask = spd_set_dram_timing(ctrl, param , dimm_mask);
 	if (dimm_mask < 0)
 		goto hw_spd_err;
+	printk(BIOS_SPEW, "spd_set_dram_timing dimm_mask = %08lx\n", dimm_mask);
 	order_dimms(ctrl);
 	return;
  hw_spd_err:
