@@ -938,17 +938,21 @@ static unsigned long interleave_chip_selects(const struct mem_controller *ctrl)
 		}
 		/* The size differed fail */
 		if (common_size != size) {
+			printk(BIOS_DEBUG, "  At CS index %d: ", index);
+			printk(BIOS_DEBUG, "size diff fail %08x != %08x\n", common_size, size);
 			return 0;
 		}
 
 		value = pci_read_config32(ctrl->f2, DRAM_BANK_ADDR_MAP);
 		cs_mode =(value >> ((index>>1)*4)) & 0xf;
+		printk(BIOS_DEBUG, "  DIMM %d cs_mode is %08x\n", (index>>1)*4&0xf, cs_mode);
 		if (cs_mode == 0) continue;
 		if (common_cs_mode == 0) {
 			common_cs_mode = cs_mode;
 		}
 		/* The cs_mode differed fail */
 		if (common_cs_mode != cs_mode) {
+			printk(BIOS_DEBUG, "  cs_mode differed fail");
 			return 0;
 		}
 	}
@@ -958,6 +962,7 @@ static unsigned long interleave_chip_selects(const struct mem_controller *ctrl)
 	 */
 	bits = log2(chip_selects);
 	if (((1 << bits) != chip_selects) || (bits < 1) || (bits > 3)) {
+		printk(BIOS_DEBUG, "  number of CS is a power of 2 > 1 fail");
 		return 0;
 	}
 
@@ -967,6 +972,7 @@ static unsigned long interleave_chip_selects(const struct mem_controller *ctrl)
 		if (is_dual_channel(ctrl)) {
 		/* Also we run out of address mask bits if we try and interleave 8 4GB dimms */
 			if ((bits == 3) && (common_size == (1 << (32 - 3)))) {
+				printk(BIOS_DEBUG, "  yoo pre_d0 ran out of addr bits wtf");
 				return 0;
 			}
 			csbase_inc <<=1;
@@ -976,6 +982,7 @@ static unsigned long interleave_chip_selects(const struct mem_controller *ctrl)
 		csbase_inc = 1 << csbase_low_d0_shift[common_cs_mode];
 		if (is_dual_channel(ctrl)) {
 			if ((bits == 3) && (common_cs_mode > 8)) {
+				printk(BIOS_DEBUG, "  ran out of addr bits??");
 				return 0;
 			}
 			csbase_inc <<=1;
@@ -997,6 +1004,8 @@ static unsigned long interleave_chip_selects(const struct mem_controller *ctrl)
 		if (!(value & 1)) {
 			continue;
 		}
+		printk(BIOS_DEBUG, "  At CS index %d: ", index);
+		printk(BIOS_DEBUG, "setting CSBASE = %08x, CSMASK= %08x\n", csbase, csmask);
 		pci_write_config32(ctrl->f2, DRAM_CSBASE + (index << 2), csbase);
 		pci_write_config32(ctrl->f2, DRAM_CSMASK + (index << 2), csmask);
 		csbase += csbase_inc;
@@ -1100,6 +1109,7 @@ static void order_dimms(const struct mem_controller *ctrl)
 	unsigned long tom_k, base_k;
 
 	if (read_option(interleave_chip_selects, 1) != 0) {
+		printk(BIOS_DEBUG, "Enabling interleaving..\n");
 		tom_k = interleave_chip_selects(ctrl);
 	} else {
 		printk(BIOS_DEBUG, "Interleaving disabled\n");
@@ -1107,11 +1117,14 @@ static void order_dimms(const struct mem_controller *ctrl)
 	}
 
 	if (!tom_k) {
+		printk(BIOS_DEBUG, "Not interleaving (tom_k==0)\n");
 		tom_k = order_chip_selects(ctrl);
 	}
+	printk(BIOS_DEBUG, "After setting up chip selects, tom_k = %08lx\n", tom_k);
 
 	/* Compute the memory base address */
 	base_k = memory_end_k(ctrl, ctrl->node_id);
+	printk(BIOS_DEBUG, "After memory_end_k(), base_k = %08lx\n", base_k);
 	tom_k += base_k;
 	route_dram_accesses(ctrl, base_k, tom_k);
 	set_top_mem(tom_k, 0);
