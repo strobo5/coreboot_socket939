@@ -142,6 +142,16 @@ void post_cache_as_ram(void)
 	size_t car_size = car_data_size();
 	void *migrated_car = (void *)(CONFIG_RAMTOP - car_size);
 
+	print_car_debug("Filling a5 pattern into RAM...\n");
+	memset_(migrated_car, 0xa5, car_size);
+	print_car_debug("Done, now dumping a5 pattern in RAM...\n");
+	for (unsigned int i = 0; i<car_size/16; i++) {
+		printk(BIOS_DEBUG, "%08x: ", i<<4);
+		for (unsigned int j = 0; j<16; j++) {
+			printk(BIOS_DEBUG, "%02hhx ", *((uint8_t *) (migrated_car+16*i+j)));
+		}
+		printk(BIOS_DEBUG, "\n");
+	}
 	print_car_debug("Copying data from cache to RAM...");
 	memcpy_(migrated_car, _car_relocatable_data_start, car_size);
 	print_car_debug(" Done\n");
