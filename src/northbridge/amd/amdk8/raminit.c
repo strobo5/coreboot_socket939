@@ -549,9 +549,9 @@ static void hw_enable_ecc(const struct mem_controller *ctrl)
 	if (nbcap & NBCAP_ECC) {
 		dcl |= DCL_DimmEccEn;
 	}
-	if (read_option(ECC_memory, 1) == 0) {
+	//if (read_option(ECC_memory, 1) == 0) {
 		dcl &= ~DCL_DimmEccEn;
-	}
+	//}
 	pci_write_config32(ctrl->f2, DRAM_CONFIG_LOW, dcl);
 }
 
